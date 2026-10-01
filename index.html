@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Moja strona</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f2f2f2;
+    color: #222;
+}
+
+header {
+    background: #222;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+
+.box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+}
+
+input,
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+textarea {
+    min-height: 250px;
+    resize: vertical;
+}
+
+button {
+    border: 0;
+    border-radius: 6px;
+    padding: 10px 15px;
+    margin: 4px;
+    cursor: pointer;
+}
+
+.primary {
+    background: #222;
+    color: white;
+}
+
+.secondary {
+    background: #ddd;
+}
+
+.danger {
+    background: #c62828;
+    color: white;
+}
+
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 20px;
+}
+
+.tab {
+    background: #ddd;
+}
+
+.tab.active {
+    background: #222;
+    color: white;
+}
+
+.hidden {
+    display: none;
+}
+
+.media {
+    margin-top: 25px;
+}
+
+.media-item {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.media-item img {
+    max-width: 100%;
+    max-height: 500px;
+    border-radius: 8px;
+}
+
+.media-item video {
+    max-width: 100%;
+    max-height: 500px;
+    border-radius: 8px;
+}
+
+.status {
+    margin: 10px 0;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid #ddd;
+    margin: 25px 0;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Moja strona</h1>
+</header>
+
+<div class="container">
+
+<!-- LOGOWANIE -->
+
+<div id="loginBox" class="box">
+
+    <h2>Logowanie właściciela</h2>
+
+    <input
+        id="email"
+        type="email"
+        placeholder="Email"
+    >
+
+    <input
+        id="password"
+        type="password"
+        placeholder="Hasło"
+    >
+
+    <button class="primary" onclick="login()">
+        Zaloguj się
+    </button>
+
+    <div id="loginMessage"></div>
+
+</div>
+
+
+<!-- PANEL WŁAŚCICIELA -->
+
+<div id="ownerPanel" class="box hidden">
+
+    <h2>Panel właściciela</h2>
+
+    <button class="primary" onclick="addPage()">
+        + Dodaj zakładkę
+    </button>
+
+    <button class="secondary" onclick="logout()">
+        Wyloguj
+    </button>
+
+    <hr>
+
+    <div id="ownerTabs" class="tabs"></div>
+
+    <div id="editorArea" class="hidden">
+
+        <h3>Edycja zakładki</h3>
+
+        <label>Nazwa zakładki</label>
+
+        <input id="pageTitle">
+
+        <label>Treść</label>
+
+        <textarea
+            id="pageContent"
+            placeholder="Wpisz treść..."
+        ></textarea>
+
+        <button
+            class="primary"
+            onclick="savePage()"
+        >
+            Zapisz
+        </button>
+
+        <button
+            class="danger"
+            onclick="deletePage()"
+        >
+            Usuń zakładkę
+        </button>
+
+        <hr>
+
+        <h3>Dodaj zdjęcie</h3>
+
+        <input
+            id="imageInput"
+            type="file"
+            accept="image/*"
+        >
+
+        <button
+            class="primary"
+            onclick="uploadImage()"
+        >
+            📷 Dodaj zdjęcie
+        </button>
+
+        <h3>Dodaj film</h3>
+
+        <input
+            id="videoInput"
+            type="file"
+            accept="video/*"
+        >
+
+        <button
+            class="primary"
+            onclick="uploadVideo()"
+        >
+            🎥 Dodaj film
+        </button>
+
+        <div id="uploadMessage"></div>
+
+    </div>
+
+</div>
+
+
+<!-- WIDOK PUBLICZNY -->
+
+<div class="box">
+
+    <h2>Zakładki</h2>
+
+    <div id="publicTabs" class="tabs"></div>
+
+    <div id="publicContent">
+        Ładowanie...
+    </div>
+
+    <div id="mediaContainer" class="media"></div>
+
+</div>
+
+</div>
+
+
+<script>
+
+// =====================================
+// SUPABASE
+// =====================================
+
+const SUPABASE_URL =
+"https://ywtbialpqwwssmufxpbu.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_fbRj1KqK3lx0h47PXkxJFw_VXukD4Yx";
+
+const supabaseClient =
+supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+
+// =====================================
+// ZMIENNE
+// =====================================
+
+let pages = [];
+let media = [];
+
+let currentPageId = null;
+let currentUser = null;
+
+
+// =====================================
+// START
+// =====================================
+
+window.addEventListener("load", async () => {
+
+    const { data } =
+        await supabaseClient.auth.getSession();
+
+    if (data.session) {
+
+        currentUser =
+            data.session.user;
+
+        showOwnerPanel();
+    }
+
+    await loadPages();
+
+});
+
+
+// =====================================
+// LOGOWANIE
+// =====================================
+
+async function login() {
+
+    const email =
+        document.getElementById("email").value;
+
+    const password =
+        document.getElementById("password").value;
+
+    const message =
+        document.getElementById("loginMessage");
+
+    message.textContent =
+        "Logowanie...";
+
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+
+            email: email,
+            password: password
+
+        });
+
+    if (error) {
+
+        message.textContent =
+            "Błąd logowania: " +
+            error.message;
+
+        return;
+    }
+
+    currentUser =
+        data.user;
+
+    message.textContent = "";
+
+    showOwnerPanel();
+
+    await loadPages();
+
+}
+
+
+// =====================================
+// WYLOGOWANIE
+// =====================================
+
+async function logout() {
+
+    await supabaseClient.auth.signOut();
+
+    currentUser = null;
+
+    document
+        .getElementById("ownerPanel")
+        .classList.add("hidden");
+
+    document
+        .getElementById("loginBox")
+        .classList.remove("hidden");
+
+}
+
+
+// =====================================
+// PANEL WŁAŚCICIELA
+// =====================================
+
+function showOwnerPanel() {
+
+    document
+        .getElementById("loginBox")
+        .classList.add("hidden");
+
+    document
+        .getElementById("ownerPanel")
+        .classList.remove("hidden");
+
+}
+
+
+// =====================================
+// POBIERANIE ZAKŁADEK
+// =====================================
+
+async function loadPages() {
+
+    const { data, error } =
+        await supabaseClient
+            .from("pages")
+            .select("*")
+            .order(
+                "sort_order",
+                { ascending: true }
+            );
+
+    if (error) {
+
+        console.error(error);
+
+        document
+            .getElementById("publicContent")
+            .textContent =
+            "Błąd pobierania zakładek.";
+
+        return;
+    }
+
+    pages = data || [];
+
+    renderTabs();
+
+    if (pages.length > 0) {
+
+        if (
+            !currentPageId ||
+            !pages.some(
+                p => p.id === currentPageId
+            )
+        ) {
+
+            currentPageId =
+                pages[0].id;
+        }
+
+        await showPage(currentPageId);
+
+    } else {
+
+        document
+            .getElementById("publicContent")
+            .textContent =
+            "Nie ma jeszcze zakładek.";
+    }
+
+}
+
+
+// =====================================
+// ZAKŁADKI
+// =====================================
+
+function renderTabs() {
+
+    const publicTabs =
+        document.getElementById("publicTabs");
+
+    const ownerTabs =
+        document.getElementById("ownerTabs");
+
+    publicTabs.innerHTML = "";
+
+    ownerTabs.innerHTML = "";
+
+    pages.forEach(page => {
+
+        const button =
+            document.createElement("button");
+
+        button.className =
+            "tab" +
+            (
+                page.id === currentPageId
+                ? " active"
+                : ""
+            );
+
+        button.textContent =
+            page.title;
+
+        button.onclick = () =>
+            showPage(page.id);
+
+        publicTabs.appendChild(button);
+
+
+        if (currentUser) {
+
+            const ownerButton =
+                document.createElement("button");
+
+            ownerButton.className =
+                "tab" +
+                (
+                    page.id === currentPageId
+                    ? " active"
+                    : ""
+                );
+
+            ownerButton.textContent =
+                page.title;
+
+            ownerButton.onclick = () =>
+                editPage(page.id);
+
+            ownerTabs.appendChild(
+                ownerButton
+            );
+        }
+
+    });
+
+}
+
+
+// =====================================
+// POKAŻ STRONĘ
+// =====================================
+
+async function showPage(id) {
+
+    currentPageId = id;
+
+    const page =
+        pages.find(
+            p => p.id === id
+        );
+
+    if (!page) return;
+
+    document
+        .getElementById("publicContent")
+        .textContent =
+        page.content || "";
+
+    renderTabs();
+
+    await loadMedia();
+
+}
+
+
+// =====================================
+// EDYCJA
+// =====================================
+
+function editPage(id) {
+
+    const page =
+        pages.find(
+            p => p.id === id
+        );
+
+    if (!page) return;
+
+    currentPageId = id;
+
+    document
+        .getElementById("editorArea")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("pageTitle")
+        .value =
+        page.title;
+
+    document
+        .getElementById("pageContent")
+        .value =
+        page.content || "";
+
+    renderTabs();
+
+}
+
+
+// =====================================
+// DODAWANIE ZAKŁADKI
+// =====================================
+
+async function addPage() {
+
+    const title =
+        prompt(
+            "Podaj nazwę zakładki:"
+        );
+
+    if (!title) return;
+
+    const { data, error } =
+        await supabaseClient
+            .from("pages")
+            .insert({
+
+                title: title,
+                content: "",
+                sort_order: pages.length
+
+            })
+            .select()
+            .single();
+
+    if (error) {
+
+        alert(
+            "Błąd:\n" +
+            error.message
+        );
+
+        return;
+    }
+
+    pages.push(data);
+
+    currentPageId =
+        data.id;
+
+    renderTabs();
+
+    editPage(data.id);
+
+}
+
+
+// =====================================
+// ZAPIS STRONY
+// =====================================
+
+async function savePage() {
+
+    if (!currentPageId) return;
+
+    const title =
+        document
+            .getElementById("pageTitle")
+            .value;
+
+    const content =
+        document
+            .getElementById("pageContent")
+            .value;
+
+    const { error } =
+        await supabaseClient
+            .from("pages")
+            .update({
+
+                title: title,
+                content: content
+
+            })
+            .eq(
+                "id",
+                currentPageId
+            );
+
+    if (error) {
+
+        alert(
+            "Błąd zapisu:\n" +
+            error.message
+        );
+
+        return;
+    }
+
+    const page =
+        pages.find(
+            p => p.id === currentPageId
+        );
+
+    if (page) {
+
+        page.title = title;
+        page.content = content;
+
+    }
+
+    renderTabs();
+
+    document
+        .getElementById("publicContent")
+        .textContent =
+        content;
+
+}
+
+
+// =====================================
+// USUWANIE STRONY
+// =====================================
+
+async function deletePage() {
+
+    if (!currentPageId) return;
+
+    const page =
+        pages.find(
+            p => p.id === currentPageId
+        );
+
+    if (!page) return;
+
+    if (
+        !confirm(
+            "Usunąć zakładkę \"" +
+            page.title +
+            "\"?"
+        )
+    ) return;
+
+    const { error } =
+        await supabaseClient
+            .from("pages")
+            .delete()
+            .eq(
+                "id",
+                currentPageId
+            );
+
+    if (error) {
+
+        alert(
+            "Błąd usuwania:\n" +
+            error.message
+        );
+
+        return;
+    }
+
+    pages =
+        pages.filter(
+            p => p.id !== currentPageId
+        );
+
+    currentPageId =
+        pages.length
+        ? pages[0].id
+        : null;
+
+    renderTabs();
+
+    if (currentPageId) {
+
+        await showPage(
+            currentPageId
+        );
+
+    } else {
+
+        document
+            .getElementById("publicContent")
+            .textContent =
+            "Nie ma jeszcze zakładek.";
+
+        document
+            .getElementById("mediaContainer")
+            .innerHTML = "";
+
+    }
+
+}
+
+
+// =====================================
+// WYSYŁANIE PLIKU
+// =====================================
+
+async function uploadFile(file) {
+
+    if (!file) {
+
+        alert(
+            "Najpierw wybierz plik."
+        );
+
+        return;
+    }
+
+    if (!currentPageId) {
+
+        alert(
+            "Najpierw wybierz zakładkę."
+        );
+
+        return;
+    }
+
+    const message =
+        document.getElementById(
+            "uploadMessage"
+        );
+
+    message.textContent =
+        "Wysyłanie pliku...";
+
+
+    const extension =
+        file.name.includes(".")
+        ? file.name
+            .split(".")
+            .pop()
+        : "";
+
+    const fileName =
+        Date.now() +
+        "-" +
+        Math.random()
+            .toString(36)
+            .substring(2) +
+        (extension
+            ? "." + extension
+            : "");
+
+
+    const path =
+        currentPageId +
+        "/" +
+        fileName;
+
+
+    const { error: uploadError } =
+        await supabaseClient
+            .storage
+            .from("media")
+            .upload(
+                path,
+                file
+            );
+
+
+    if (uploadError) {
+
+        message.textContent =
+            "Błąd wysyłania: " +
+            uploadError.message;
+
+        return;
+    }
+
+
+    const { data: urlData } =
+        supabaseClient
+            .storage
+            .from("media")
+            .getPublicUrl(path);
+
+
+    const fileUrl =
+        urlData.publicUrl;
+
+
+    const { error: dbError } =
+        await supabaseClient
+            .from("media")
+            .insert({
+
+                page_id:
+                    currentPageId,
+
+                file_url:
+                    fileUrl,
+
+                file_name:
+                    file.name,
+
+                file_type:
+                    file.type
+
+            });
+
+
+    if (dbError) {
+
+        message.textContent =
+            "Plik wysłany, ale nie zapisano informacji o nim: " +
+            dbError.message;
+
+        return;
+    }
+
+
+    message.textContent =
+        "Plik dodany ✓";
+
+
+    await loadMedia();
+
+}
+
+
+// =====================================
+// ZDJĘCIE
+// =====================================
+
+async function uploadImage() {
+
+    const input =
+        document.getElementById(
+            "imageInput"
+        );
+
+    const file =
+        input.files[0];
+
+    if (
+        file &&
+        !file.type.startsWith("image/")
+    ) {
+
+        alert(
+            "Wybierz plik graficzny."
+        );
+
+        return;
+    }
+
+    await uploadFile(file);
+
+    input.value = "";
+
+}
+
+
+// =====================================
+// FILM
+// =====================================
+
+async function uploadVideo() {
+
+    const input =
+        document.getElementById(
+            "videoInput"
+        );
+
+    const file =
+        input.files[0];
+
+    if (
+        file &&
+        !file.type.startsWith("video/")
+    ) {
+
+        alert(
+            "Wybierz plik filmowy."
+        );
+
+        return;
+    }
+
+    await uploadFile(file);
+
+    input.value = "";
+
+}
+
+
+// =====================================
+// POBIERANIE MEDIÓW
+// =====================================
+
+async function loadMedia() {
+
+    if (!currentPageId) return;
+
+    const { data, error } =
+        await supabaseClient
+            .from("media")
+            .select("*")
+            .eq(
+                "page_id",
+                currentPageId
+            )
+            .order(
+                "created_at",
+                { ascending: true }
+            );
+
+    if (error) {
+
+        console.error(error);
+
+        return;
+    }
+
+    media = data || [];
+
+    renderMedia();
+
+}
+
+
+// =====================================
+// WYŚWIETLANIE MEDIÓW
+// =====================================
+
+function renderMedia() {
+
+    const container =
+        document.getElementById(
+            "mediaContainer"
+        );
+
+    container.innerHTML = "";
+
+
+    media.forEach(item => {
+
+        const wrapper =
+            document.createElement(
+                "div"
+            );
+
+        wrapper.className =
+            "media-item";
+
+
+        if (
+            item.file_type
+                .startsWith("image/")
+        ) {
+
+            const img =
+                document.createElement(
+                    "img"
+                );
+
+            img.src =
+                item.file_url;
+
+            img.alt =
+                item.file_name;
+
+            wrapper.appendChild(img);
+
+        }
+
+        else if (
+            item.file_type
+                .startsWith("video/")
+        ) {
+
+            const video =
+                document.createElement(
+                    "video"
+                );
+
+            video.src =
+                item.file_url;
+
+            video.controls = true;
+
+            wrapper.appendChild(video);
+
+        }
+
+
+        if (currentUser) {
+
+            const deleteButton =
+                document.createElement(
+                    "button"
+                );
+
+            deleteButton.className =
+                "danger";
+
+            deleteButton.textContent =
+                "Usuń";
+
+            deleteButton.onclick = () =>
+                deleteMedia(item);
+
+            wrapper.appendChild(
+                deleteButton
+            );
+        }
+
+
+        container.appendChild(
+            wrapper
+        );
+
+    });
+
+}
+
+
+// =====================================
+// USUWANIE MEDIA
+// =====================================
+
+async function deleteMedia(item) {
+
+    if (
+        !confirm(
+            "Usunąć ten plik?"
+        )
+    ) return;
+
+
+    const path =
+        item.file_url
+            .split("/media/")
+            .pop();
+
+
+    const { error: storageError } =
+        await supabaseClient
+            .storage
+            .from("media")
+            .remove([
+                path
+            ]);
+
+
+    if (storageError) {
+
+        alert(
+            "Błąd usuwania pliku:\n" +
+            storageError.message
+        );
+
+        return;
+    }
+
+
+    const { error: dbError } =
+        await supabaseClient
+            .from("media")
+            .delete()
+            .eq(
+                "id",
+                item.id
+            );
+
+
+    if (dbError) {
+
+        alert(
+            "Plik usunięto, ale nie usunięto wpisu:\n" +
+            dbError.message
+        );
+
+        return;
+    }
+
+
+    await loadMedia();
+
+}
+
+</script>
+
+</body>
+</html>
