@@ -69,6 +69,49 @@ header h1 {
     color: #334155;
 }
 
+/* ===== SEKCJA POWITALNA ===== */
+
+.welcome-box {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: white;
+    padding: 40px 25px;
+    margin-bottom: 25px;
+    border-radius: 18px;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.20);
+}
+
+.welcome-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.welcome-box h2 {
+    color: white;
+    margin: 5px 0 12px;
+    font-size: 28px;
+}
+
+.welcome-box p {
+    margin: 0 auto 22px;
+    max-width: 650px;
+    font-size: 17px;
+    line-height: 1.6;
+    opacity: 0.95;
+}
+
+.welcome-button {
+    background: white;
+    color: #1e3a8a;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.welcome-button:hover {
+    background: #eff6ff;
+}
 /* ===== POLA ===== */
 
 input,
@@ -352,6 +395,27 @@ hr {
 </header>
 
 <div class="container">
+    <div class="welcome-box">
+    <div class="welcome-icon">🚌</div>
+
+```
+<h2>Witaj na stronie Wycieczki Klasowe!</h2>
+
+<p>
+    Znajdziesz tutaj informacje, zdjęcia i filmy
+    z naszych wspólnych wycieczek.
+</p>
+
+<button
+    class="welcome-button"
+    onclick="document.getElementById('publicTabs').scrollIntoView({ behavior: 'smooth' });"
+>
+    Zobacz wycieczki ↓
+</button>
+```
+
+</div>
+
 
 <!-- LOGOWANIE -->
 
