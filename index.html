@@ -344,21 +344,18 @@ window.addEventListener("load", async () => {
 // =====================================
 // LOGOWANIE
 // =====================================
-async function logout() {
-
-    await supabaseClient.auth.signOut();
-
-    currentUser = null;
-
-    document
-        .getElementById("ownerPanel")
-        .classList.add("hidden");
+function showLogin() {
 
     document
         .getElementById("loginBox")
-        .classList.add("hidden");
+        .classList.remove("hidden");
+
+    document
+        .getElementById("email")
+        .focus();
 
 }
+
 async function login() {
 
     const email =
