@@ -1435,6 +1435,13 @@ video.setAttribute(
     "nodownload"
 );
 
+            video.addEventListener(
+    "contextmenu",
+    function(event) {
+        event.preventDefault();
+    }
+);
+            
 wrapper.appendChild(video);
         }
 
