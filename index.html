@@ -1421,18 +1421,21 @@ wrapper.appendChild(img);
                 .startsWith("video/")
         ) {
 
-            const video =
-                document.createElement(
-                    "video"
-                );
+          const video =
+    document.createElement(
+        "video"
+    );
 
-            video.src =
-                item.file_url;
+video.src = item.file_url;
 
-            video.controls = true;
+video.controls = true;
 
-            wrapper.appendChild(video);
+video.setAttribute(
+    "controlsList",
+    "nodownload"
+);
 
+wrapper.appendChild(video);
         }
 
 
