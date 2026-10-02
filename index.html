@@ -134,15 +134,32 @@ hr {
 
 <body>
 
-<header>
+<header style="position: relative;">
     <h1>Wycieczki Klasowe</h1>
+
+    <button
+        onclick="showLogin()"
+        style="
+            position:absolute;
+            top:10px;
+            right:10px;
+            padding:6px 10px;
+            font-size:12px;
+            background:#444;
+            color:white;
+            border:0;
+            border-radius:5px;
+        "
+    >
+        Admin
+    </button>
 </header>
 
 <div class="container">
 
 <!-- LOGOWANIE -->
 
-<div id="loginBox" class="box">
+<div id="loginBox" class="box hidden">
 
     <h2>Logowanie właściciela</h2>
 
@@ -327,7 +344,17 @@ window.addEventListener("load", async () => {
 // =====================================
 // LOGOWANIE
 // =====================================
+function showLogin() {
 
+    document
+        .getElementById("loginBox")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("email")
+        .focus();
+
+}
 async function login() {
 
     const email =
