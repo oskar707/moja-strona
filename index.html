@@ -344,15 +344,19 @@ window.addEventListener("load", async () => {
 // =====================================
 // LOGOWANIE
 // =====================================
-function showLogin() {
+async function logout() {
+
+    await supabaseClient.auth.signOut();
+
+    currentUser = null;
+
+    document
+        .getElementById("ownerPanel")
+        .classList.add("hidden");
 
     document
         .getElementById("loginBox")
-        .classList.remove("hidden");
-
-    document
-        .getElementById("email")
-        .focus();
+        .classList.add("hidden");
 
 }
 async function login() {
