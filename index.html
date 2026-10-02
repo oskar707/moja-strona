@@ -402,6 +402,40 @@ hr {
         font-size: 15px;
     }
 }
+/* ===== POWIĘKSZONE ZDJĘCIE ===== */
+
+.image-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+    z-index: 9999;
+    cursor: zoom-out;
+}
+
+.image-overlay img {
+    max-width: 95%;
+    max-height: 92vh;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 600px) {
+
+    .image-overlay {
+        padding: 10px;
+    }
+
+    .image-overlay img {
+        max-width: 98%;
+        max-height: 90vh;
+    }
+}
+    
 </style>
 
 </head>
@@ -1366,13 +1400,19 @@ function renderMedia() {
                     "img"
                 );
 
-            img.src =
-                item.file_url;
+           img.src =
+    item.file_url;
 
-            img.alt =
-                item.file_name;
+img.alt =
+    item.file_name;
 
-            wrapper.appendChild(img);
+img.style.cursor =
+    "zoom-in";
+
+img.onclick = () =>
+    openImage(item.file_url);
+
+wrapper.appendChild(img);
 
         }
 
@@ -1430,7 +1470,38 @@ function renderMedia() {
 // =====================================
 // USUWANIE MEDIA
 // =====================================
+function openImage(url) {
 
+    const overlay =
+        document.createElement("div");
+
+    overlay.className =
+        "image-overlay";
+
+
+    const image =
+        document.createElement("img");
+
+    image.src = url;
+
+    image.alt =
+        "Powiększone zdjęcie";
+
+
+    overlay.appendChild(
+        image
+    );
+
+
+    overlay.onclick = () => {
+        overlay.remove();
+    };
+
+
+    document.body.appendChild(
+        overlay
+    );
+}
 async function deleteMedia(item) {
 
     if (
